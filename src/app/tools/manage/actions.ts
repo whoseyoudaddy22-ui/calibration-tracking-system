@@ -13,6 +13,16 @@ function parseDate(value: FormDataEntryValue | null): Date {
   return date;
 }
 
+function parseResult(value: FormDataEntryValue | null): string {
+  const str = typeof value === "string" ? value.trim() : "";
+  return str === "ไม่ผ่าน" ? "ไม่ผ่าน" : "ผ่าน";
+}
+
+function parseNotes(value: FormDataEntryValue | null): string | null {
+  const str = typeof value === "string" ? value.trim() : "";
+  return str || null;
+}
+
 export async function createTool(formData: FormData) {
   const session = await requireRole(["Admin", "Editor"]);
 
@@ -21,21 +31,26 @@ export async function createTool(formData: FormData) {
   const department = String(formData.get("department") ?? "").trim();
   const lastCalibrationDate = parseDate(formData.get("lastCalibrationDate"));
   const expiryDate = parseDate(formData.get("expiryDate"));
+  const result = parseResult(formData.get("result"));
+  const notes = parseNotes(formData.get("notes"));
 
   if (!toolCode || !name || !department) {
     throw new Error("Missing required fields");
   }
 
-  const tool = await prisma.tool.create({
-    data: { toolCode, name, department, lastCalibrationDate, expiryDate },
-  });
-
-  await prisma.calibrationHistory.create({
-    data: { toolId: tool.id, date: lastCalibrationDate, performedById: session.user.id },
+  const tool = await prisma.$transaction(async (tx) => {
+    const created = await tx.tool.create({
+      data: { toolCode, name, department, lastCalibrationDate, expiryDate },
+    });
+    await tx.calibrationHistory.create({
+      data: { toolId: created.id, date: lastCalibrationDate, result, notes, performedById: session.user.id },
+    });
+    return created;
   });
 
   revalidatePath("/tools/manage");
   revalidatePath("/dashboard");
+  revalidatePath(`/tools/${tool.id}`);
 }
 
 export async function updateTool(formData: FormData) {
@@ -47,6 +62,8 @@ export async function updateTool(formData: FormData) {
   const department = String(formData.get("department") ?? "").trim();
   const lastCalibrationDate = parseDate(formData.get("lastCalibrationDate"));
   const expiryDate = parseDate(formData.get("expiryDate"));
+  const result = parseResult(formData.get("result"));
+  const notes = parseNotes(formData.get("notes"));
 
   if (!id || !toolCode || !name || !department) {
     throw new Error("Missing required fields");
@@ -55,19 +72,22 @@ export async function updateTool(formData: FormData) {
   const existing = await prisma.tool.findUnique({ where: { id } });
   if (!existing) throw new Error("Tool not found");
 
-  await prisma.tool.update({
-    where: { id },
-    data: { toolCode, name, department, lastCalibrationDate, expiryDate },
-  });
-
-  if (existing.lastCalibrationDate.getTime() !== lastCalibrationDate.getTime()) {
-    await prisma.calibrationHistory.create({
-      data: { toolId: id, date: lastCalibrationDate, performedById: session.user.id },
+  await prisma.$transaction(async (tx) => {
+    await tx.tool.update({
+      where: { id },
+      data: { toolCode, name, department, lastCalibrationDate, expiryDate },
     });
-  }
+
+    if (existing.lastCalibrationDate.getTime() !== lastCalibrationDate.getTime()) {
+      await tx.calibrationHistory.create({
+        data: { toolId: id, date: lastCalibrationDate, result, notes, performedById: session.user.id },
+      });
+    }
+  });
 
   revalidatePath("/tools/manage");
   revalidatePath("/dashboard");
+  revalidatePath(`/tools/${id}`);
 }
 
 export async function deleteTool(formData: FormData) {

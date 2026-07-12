@@ -46,6 +46,8 @@ model CalibrationHistory {
   id            String   @id @default(cuid())
   toolId        String
   date          DateTime
+  result        String   @default("ผ่าน")
+  notes         String?
   performedById String
   createdAt     DateTime @default(now())
 

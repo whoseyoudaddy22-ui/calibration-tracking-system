@@ -8,11 +8,12 @@ export default async function AdminPage() {
   const users = await prisma.user.findMany({ orderBy: { username: "asc" } });
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 p-8">
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="mx-auto max-w-3xl space-y-8">
       <Nav role={session?.user.role} />
       <h1 className="text-2xl font-semibold text-gray-900">จัดการผู้ใช้งาน</h1>
 
-      <section className="rounded-lg border border-gray-200 p-6">
+      <section className="rounded-lg border border-gray-200 bg-white p-6">
         <h2 className="mb-4 text-lg font-medium text-gray-900">เพิ่มผู้ใช้ใหม่</h2>
         <form action={createUser} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <label className="space-y-1 text-sm">
@@ -58,7 +59,7 @@ export default async function AdminPage() {
           <form
             key={user.id}
             action={updateUserRole}
-            className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 p-4"
+            className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-4"
           >
             <input type="hidden" name="id" value={user.id} />
             <span className="min-w-[10rem] font-medium text-gray-900">{user.username}</span>
@@ -88,6 +89,7 @@ export default async function AdminPage() {
           </form>
         ))}
       </section>
+      </div>
     </div>
   );
 }
