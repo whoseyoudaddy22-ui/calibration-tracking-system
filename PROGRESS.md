@@ -22,6 +22,10 @@ _อัปเดตล่าสุด: 2026-07-12_
 - **`.env.example`**: template สำหรับ env vars ที่จำเป็น (commit ได้ ต่างจาก `.env` จริงที่ถูก gitignore)
 - **Sample seed data**: `prisma/seed.ts` สร้างเครื่องมือตัวอย่าง 6 รายการ ครบทั้ง 3 สถานะ พร้อมประวัติ
   การสอบเทียบ 2 รอบต่อชิ้น, seed แบบ idempotent (รันซ้ำได้ไม่ซ้ำข้อมูล)
+- **Demo user accounts (Editor/Visitor)**: เพิ่ม `ensureDemoUsers()` ใน `prisma/seed.ts` สร้างบัญชี
+  `editor`/`visitor` (รหัสผ่านเดียวกับ admin คือ `SEED_ADMIN_PASSWORD`) — รันแล้วจริงใน `dev.db`
+  ตอนนี้มีครบ 3 role (`admin`/`editor`/`visitor`) ลูกค้ายืนยันว่าเป็นโปรเจกต์จบการศึกษาที่ส่งแล้วไม่พัฒนา
+  ต่อ จึงใช้รหัสผ่านเดียวกันแบบง่ายๆ ได้โดยไม่ต้องแยก ไม่ได้แตะบัญชี admin เดิม
 - **Project tooling**: `.claude/skills/` (ui-design-system, review-code, environment-setup) และ
   `/demo-start` command สำหรับเตรียมเครื่อง demo ให้ลูกค้าดูแบบ local-only
 - **RBAC end-to-end verification**: ทดสอบจริงในเบราว์เซอร์ทั้ง 3 สิทธิ์แล้ว — Editor เห็นเมนู

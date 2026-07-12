@@ -2,6 +2,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma/client";
+import type { Role } from "../src/generated/prisma/enums";
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -12,10 +13,7 @@ function daysFromNow(days: number): Date {
   return new Date(Date.now() + days * DAY_MS);
 }
 
-async function ensureAdminUser() {
-  const username = process.env.SEED_ADMIN_USERNAME ?? "admin";
-  const password = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe123!";
-
+async function ensureUser(username: string, password: string, role: Role) {
   const existing = await prisma.user.findUnique({ where: { username } });
   if (existing) {
     console.log(`User "${username}" already exists, skipping.`);
@@ -24,11 +22,25 @@ async function ensureAdminUser() {
 
   const hashed = await bcrypt.hash(password, 12);
   const created = await prisma.user.create({
-    data: { username, password: hashed, role: "Admin" },
+    data: { username, password: hashed, role },
   });
 
-  console.log(`Created Admin user "${username}".`);
+  console.log(`Created ${role} user "${username}".`);
   return created;
+}
+
+async function ensureAdminUser() {
+  const username = process.env.SEED_ADMIN_USERNAME ?? "admin";
+  const password = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe123!";
+  return ensureUser(username, password, "Admin");
+}
+
+// Same password as the Admin account — this is a graduation project handed
+// off to the customer as-is, not something with ongoing security upkeep.
+async function ensureDemoUsers() {
+  const password = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe123!";
+  await ensureUser("editor", password, "Editor");
+  await ensureUser("visitor", password, "Visitor");
 }
 
 async function ensureSampleTools(performedById: string) {
@@ -89,6 +101,7 @@ async function ensureSampleTools(performedById: string) {
 
 async function main() {
   const admin = await ensureAdminUser();
+  await ensureDemoUsers();
   await ensureSampleTools(admin.id);
 }
 
