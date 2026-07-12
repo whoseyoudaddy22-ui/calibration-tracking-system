@@ -30,6 +30,12 @@ _อัปเดตล่าสุด: 2026-07-12_
   ไม่มี console error และตรวจซ้ำว่าไม่กระทบหน้าอื่น (`/login`, `/dashboard`, `/tools/manage`, `/tools/[id]`,
   `/admin`) — ทำงานผ่าน branch `feature/landing-page-redesign` → PR → merge เข้า `master`
   (commit `b9bdba3`) แล้วลบ branch ทิ้งหลัง merge
+  - ตรวจซ้ำอีกครั้งหลัง push `708fe26` (อัปเดต PROGRESS.md) — dev server รันปกติ (`GET / 200`, ไม่มี error
+    ใน log), เนื้อหาหน้า/console ปกติทุกอย่าง (session admin ยังอยู่จาก session ก่อนหน้า) เครื่องมือ
+    screenshot ของ Browser pane เกิด timeout ชั่วคราวในรอบนี้แต่ไม่กระทบตัวแอป — ยืนยันด้วย
+    `get_page_text`/console แทน
+  - **ยังไม่ deploy ขึ้น live URL** — โปรเจกต์นี้ยัง local-only ตามนโยบาย (ดู "ช่องโหว่/แผนงานถัดไป" ด้านล่าง)
+    การ "เช็คไซต์" ทุกครั้งคือรัน dev server ในเครื่องแล้วเปิดผ่าน Browser pane เท่านั้น ไม่มี URL สาธารณะ
 - **Branding**: โลโก้ TKC เป็น favicon และแสดงอยู่เหนือฟอร์ม login
 - **`.env.example`**: template สำหรับ env vars ที่จำเป็น (commit ได้ ต่างจาก `.env` จริงที่ถูก gitignore)
 - **Sample seed data**: `prisma/seed.ts` สร้างเครื่องมือตัวอย่าง 6 รายการ ครบทั้ง 3 สถานะ พร้อมประวัติ
