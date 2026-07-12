@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  Admin
+  Editor
+  Visitor
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  role      Role     @default(Visitor)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  calibrationHistories CalibrationHistory[]
+}
+
+model Tool {
+  id                  String   @id @default(cuid())
+  toolCode            String   @unique
+  name                String
+  department          String
+  lastCalibrationDate DateTime
+  expiryDate          DateTime
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  calibrationHistories CalibrationHistory[]
+}
+
+model CalibrationHistory {
+  id            String   @id @default(cuid())
+  toolId        String
+  date          DateTime
+  performedById String
+  createdAt     DateTime @default(now())
+
+  tool        Tool @relation(fields: [toolId], references: [id])
+  performedBy User @relation(fields: [performedById], references: [id])
+}
