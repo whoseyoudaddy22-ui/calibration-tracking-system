@@ -1,30 +1,21 @@
 import { NextResponse } from "next/server";
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
+import { decideRedirect } from "@/lib/routeAccess";
 
 const { auth } = NextAuth(authConfig);
 
-const EDITOR_ROLES = new Set(["Admin", "Editor"]);
-const ADMIN_ROLES = new Set(["Admin"]);
-
 export default auth((req) => {
-  const { pathname } = req.nextUrl;
-  const role = req.auth?.user?.role;
+  const decision = decideRedirect({
+    pathname: req.nextUrl.pathname,
+    origin: req.nextUrl.origin,
+    isAuthenticated: !!req.auth,
+    role: req.auth?.user?.role,
+  });
 
-  if (!req.auth) {
-    const loginUrl = new URL("/login", req.nextUrl.origin);
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
+  if (decision.type === "redirect") {
+    return NextResponse.redirect(decision.location);
   }
-
-  if (pathname.startsWith("/admin") && !ADMIN_ROLES.has(role ?? "")) {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
-
-  if (pathname.startsWith("/tools/manage") && !EDITOR_ROLES.has(role ?? "")) {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
-
   return NextResponse.next();
 });
 

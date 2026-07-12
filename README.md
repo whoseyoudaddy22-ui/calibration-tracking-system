@@ -55,6 +55,7 @@
 | รัน dev server | `npm run dev` |
 | Build production | `npm run build` |
 | Lint | `npm run lint` |
+| รัน automated tests | `npm run test` |
 | เปิดดูฐานข้อมูลแบบ GUI | `npx prisma studio` |
 | สร้าง migration ใหม่หลังแก้ schema | `npx prisma migrate dev --name <ชื่อ>` |
 | Reseed ข้อมูลตัวอย่าง | `npm run db:seed` (idempotent — ข้ามถ้ามีข้อมูลอยู่แล้ว) |

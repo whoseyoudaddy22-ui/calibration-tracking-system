@@ -32,10 +32,18 @@ _อัปเดตล่าสุด: 2026-07-12_
   และ `/tools/manage` ผ่าน URL search params (`?q=&page=`), ใช้ native GET form ไม่มี client JS
   (`ToolSearchForm`, `Pagination` components ที่ `src/components/`) ทดสอบจริงกับข้อมูล 26 รายการ
   แบ่งเป็น 2 หน้าถูกต้อง, ค้นหากรองถูกต้อง, ปุ่มก่อนหน้า/ถัดไป disable ที่ขอบถูกต้อง
+- **Automated tests (Vitest)**: ติดตั้ง Vitest + `npm run test` (`vitest.config.ts` ตั้ง alias `@/*`
+  ให้ตรงกับ tsconfig) เขียน unit test 21 เคสครอบคลุม:
+  - `src/lib/status.test.ts` — `getToolStatus` ทุก boundary (ก่อน/ที่/หลังเส้น 30 วัน, หมดอายุ)
+  - `src/lib/authz.test.ts` — `requireRole` ทุก branch (role ผ่าน/ไม่ผ่าน/ไม่มี session/ไม่มี user)
+  - `src/lib/routeAccess.test.ts` — logic การ redirect ของ middleware ทุก role × ทุก route ที่ป้องกัน
+  แยก `decideRedirect` ออกจาก `src/proxy.ts` ไปเป็น `src/lib/routeAccess.ts` (pure function ไม่พึ่ง
+  `next/server`/`next-auth`) เพื่อให้ทดสอบได้โดยไม่ต้อง mock request จริง — พฤติกรรม middleware เดิม
+  ไม่เปลี่ยน ตรวจสอบซ้ำในเบราว์เซอร์แล้วว่า auth redirect ยังทำงานถูกต้องเหมือนเดิม
+  ยังไม่มี integration/e2e test สำหรับ server actions หรือ UI (ตามขอบเขตที่ตกลงไว้ — unit test เท่านั้น)
 
 ## ช่องโหว่ / สิ่งที่ยังไม่สมบูรณ์ (Known gaps)
 
-- ยังไม่มี automated tests (unit/integration/e2e) เลย
 - ไม่มีระบบ self-service reset password — ต้องให้ Admin จัดการผ่านหน้า `/admin` เท่านั้น
 - Alert Banner dismiss ใช้ `sessionStorage` แยกตามวันต่อแท็บเบราว์เซอร์ — ถ้ากดปิดระหว่างซ้อม demo
   จะไม่กลับมาอีกในแท็บนั้นจนกว่าจะข้ามวัน (ไม่ใช่บั๊ก แต่ต้องระวังตอน demo จริง)
@@ -45,7 +53,8 @@ _อัปเดตล่าสุด: 2026-07-12_
 ## แผนงานถัดไป (Next steps)
 
 - คุยกับลูกค้าเรื่องแผน hosting/deploy ก่อน go-live (ตอนนี้ยัง local-only ตามนโยบายโปรเจกต์)
-- พิจารณาเพิ่ม automated tests อย่างน้อยสำหรับ RBAC และ status logic
+- พิจารณาเพิ่ม integration test สำหรับ server actions (createTool, deleteUser ฯลฯ) กับ SQLite test DB จริง
+  ถ้าต้องการความมั่นใจสูงขึ้นกว่า unit test ปัจจุบัน
 
 ## บันทึกการตัดสินใจสำคัญ (Decision log)
 
