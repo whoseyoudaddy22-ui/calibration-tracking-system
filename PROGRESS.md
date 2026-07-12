@@ -40,7 +40,24 @@ _อัปเดตล่าสุด: 2026-07-12_
   แยก `decideRedirect` ออกจาก `src/proxy.ts` ไปเป็น `src/lib/routeAccess.ts` (pure function ไม่พึ่ง
   `next/server`/`next-auth`) เพื่อให้ทดสอบได้โดยไม่ต้อง mock request จริง — พฤติกรรม middleware เดิม
   ไม่เปลี่ยน ตรวจสอบซ้ำในเบราว์เซอร์แล้วว่า auth redirect ยังทำงานถูกต้องเหมือนเดิม
-  ยังไม่มี integration/e2e test สำหรับ server actions หรือ UI (ตามขอบเขตที่ตกลงไว้ — unit test เท่านั้น)
+- **Integration tests (server actions, SQLite test DB จริง)**: เพิ่ม 20 เคสใหม่ ทำงานกับฐานข้อมูล
+  SQLite จริงแยกต่างหาก (`test-integration.db`, gitignored) ไม่ใช่ mock:
+  - `src/app/tools/manage/actions.integration.test.ts` — `createTool`/`updateTool`/`deleteTool` ครบ
+    ทุกกรณี (สร้างพร้อมประวัติแรก, แก้ไขแล้วเพิ่มประวัติเมื่อวันที่สอบเทียบเปลี่ยน, ไม่เพิ่มประวัติเมื่อ
+    ไม่เปลี่ยน, ลบพร้อมประวัติ, ปฏิเสธ Visitor, field ขาด/วันที่ผิดรูปแบบ, tool ไม่มีอยู่จริง)
+  - `src/app/admin/actions.integration.test.ts` — `createUser`/`updateUserRole`/`deleteUser` ครบ
+    ทุกกรณี (hash รหัสผ่านจริงด้วย bcrypt, ปฏิเสธ role ที่ไม่ใช่ Admin, กันลบ/ถอดสิทธิ์ Admin ตัวเอง,
+    รหัสผ่านสั้นเกินไป, role ไม่ถูกต้อง)
+  - Setup อยู่ที่ `src/test/` (`globalSetup.ts` รัน `prisma migrate deploy` ใส่ไฟล์ db ทดสอบก่อนรันเทส
+    ทั้งหมดแล้วลบทิ้งหลังจบ, `setupEnv.ts` ตั้ง `DATABASE_URL`/`AUTH_SECRET` ให้ทุกไฟล์เทสก่อน import
+    `@/lib/prisma`, `testDbPath.ts` เป็น path ร่วมกัน) — mock เฉพาะ `@/auth` (คุม session) กับ
+    `next/cache` (revalidatePath ใช้นอก request scope ไม่ได้) เท่านั้น ส่วน DB query จริงทั้งหมด
+  - `vitest.config.ts` เพิ่ม `fileParallelism: false` เพราะทุกไฟล์เทสใช้ sqlite file เดียวกันผ่าน
+    better-sqlite3 (synchronous, lock ได้ถ้ารันพร้อมกัน) — รันตามลำดับแทน เร็วพอสำหรับขนาดโปรเจกต์นี้
+  - **ไม่ครอบคลุม** `loginAction` (`src/app/login/actions.ts`) — ตัวมันเองเรียก NextAuth `signIn`
+    ซึ่งต้องใช้ cookies/request scope ของจริงที่ Next.js server เท่านั้น (ทดสอบใน Node ตรงๆ ไม่ได้อย่างมีความหมาย)
+    ตรรกะหลักที่แตะ DB จริง (`authorize` callback ใน `src/auth.ts`) ยังไม่มีเทสแยก — ถ้าต้องการความมั่นใจ
+    เพิ่มเติมสำหรับ login ควรทำ e2e/browser test แทน
 
 ## ช่องโหว่ / สิ่งที่ยังไม่สมบูรณ์ (Known gaps)
 
@@ -53,8 +70,8 @@ _อัปเดตล่าสุด: 2026-07-12_
 ## แผนงานถัดไป (Next steps)
 
 - คุยกับลูกค้าเรื่องแผน hosting/deploy ก่อน go-live (ตอนนี้ยัง local-only ตามนโยบายโปรเจกต์)
-- พิจารณาเพิ่ม integration test สำหรับ server actions (createTool, deleteUser ฯลฯ) กับ SQLite test DB จริง
-  ถ้าต้องการความมั่นใจสูงขึ้นกว่า unit test ปัจจุบัน
+- พิจารณาเพิ่ม e2e/browser test สำหรับ `loginAction` ถ้าต้องการความมั่นใจสูงขึ้นกว่าปัจจุบัน (ดูหมายเหตุ
+  ในหัวข้อ Integration tests ด้านบน)
 
 ## บันทึกการตัดสินใจสำคัญ (Decision log)
 

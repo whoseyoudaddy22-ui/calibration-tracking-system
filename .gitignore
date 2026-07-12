@@ -48,3 +48,9 @@ next-env.d.ts
 /dev.db-journal
 /dev.db-wal
 /dev.db-shm
+
+# integration test sqlite database (created/removed automatically by `npm run test`)
+/test-integration.db
+/test-integration.db-journal
+/test-integration.db-wal
+/test-integration.db-shm
