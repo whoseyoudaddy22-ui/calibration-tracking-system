@@ -2,15 +2,47 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Nav } from "@/components/Nav";
+import { ToolSearchForm } from "@/components/ToolSearchForm";
+import { Pagination } from "@/components/Pagination";
 import { createTool, updateTool, deleteTool } from "./actions";
+
+const PAGE_SIZE = 20;
 
 function toDateInputValue(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-export default async function ManageToolsPage() {
+export default async function ManageToolsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}) {
+  const { q: qParam, page: pageParam } = await searchParams;
+  const q = (qParam ?? "").trim();
+  const page = Math.max(1, Number(pageParam) || 1);
+
   const session = await auth();
-  const tools = await prisma.tool.findMany({ orderBy: { toolCode: "asc" } });
+
+  const where = q
+    ? {
+        OR: [
+          { toolCode: { contains: q } },
+          { name: { contains: q } },
+          { department: { contains: q } },
+        ],
+      }
+    : undefined;
+
+  const [tools, total] = await Promise.all([
+    prisma.tool.findMany({
+      where,
+      orderBy: { toolCode: "asc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.tool.count({ where }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -41,6 +73,7 @@ export default async function ManageToolsPage() {
 
       <section className="space-y-4">
         <h2 className="text-lg font-medium text-gray-900">รายการเครื่องมือ</h2>
+        <ToolSearchForm basePath="/tools/manage" query={q} />
         {tools.map((tool) => (
           <form
             key={tool.id}
@@ -90,7 +123,10 @@ export default async function ManageToolsPage() {
             </div>
           </form>
         ))}
-        {tools.length === 0 && <p className="text-sm text-gray-500">ยังไม่มีข้อมูลเครื่องมือ</p>}
+        {tools.length === 0 && (
+          <p className="text-sm text-gray-500">{q ? "ไม่พบเครื่องมือที่ค้นหา" : "ยังไม่มีข้อมูลเครื่องมือ"}</p>
+        )}
+        <Pagination basePath="/tools/manage" page={page} totalPages={totalPages} query={q} />
       </section>
       </div>
     </div>

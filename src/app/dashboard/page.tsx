@@ -2,11 +2,43 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Nav } from "@/components/Nav";
+import { ToolSearchForm } from "@/components/ToolSearchForm";
+import { Pagination } from "@/components/Pagination";
 import { getToolStatus, STATUS_LABEL, STATUS_BADGE_CLASS } from "@/lib/status";
 
-export default async function DashboardPage() {
+const PAGE_SIZE = 20;
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}) {
+  const { q: qParam, page: pageParam } = await searchParams;
+  const q = (qParam ?? "").trim();
+  const page = Math.max(1, Number(pageParam) || 1);
+
   const session = await auth();
-  const tools = await prisma.tool.findMany({ orderBy: { expiryDate: "asc" } });
+
+  const where = q
+    ? {
+        OR: [
+          { toolCode: { contains: q } },
+          { name: { contains: q } },
+          { department: { contains: q } },
+        ],
+      }
+    : undefined;
+
+  const [tools, total] = await Promise.all([
+    prisma.tool.findMany({
+      where,
+      orderBy: { expiryDate: "asc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.tool.count({ where }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const withStatus = tools.map((tool) => ({ ...tool, status: getToolStatus(tool.expiryDate) }));
 
@@ -15,6 +47,8 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-5xl space-y-6">
         <Nav role={session?.user.role} />
         <h1 className="text-2xl font-semibold text-gray-900">แดชบอร์ดสถานะเครื่องมือ</h1>
+
+        <ToolSearchForm basePath="/dashboard" query={q} />
 
         <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -54,13 +88,15 @@ export default async function DashboardPage() {
               {withStatus.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
-                    ยังไม่มีข้อมูลเครื่องมือ
+                    {q ? "ไม่พบเครื่องมือที่ค้นหา" : "ยังไม่มีข้อมูลเครื่องมือ"}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        <Pagination basePath="/dashboard" page={page} totalPages={totalPages} query={q} />
       </div>
     </div>
   );
