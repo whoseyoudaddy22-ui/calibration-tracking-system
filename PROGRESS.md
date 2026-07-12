@@ -172,6 +172,27 @@ _อัปเดตล่าสุด: 2026-07-12_
   โดยไม่ลบข้อมูลจริง (ยืนยันด้วย DOM query), กด "บันทึก" เด้ง dialog แล้วกด "ยืนยัน" submit ฟอร์มจริง
   สำเร็จไม่มี error — `npx tsc --noEmit`, `npx eslint`, `npm run test` (21 เคส unit tests) ผ่านหมด
 
+- **Rate limiting สำหรับ login**: เพิ่ม `src/lib/loginRateLimit.ts` — sliding-window limiter แบบ
+  in-memory (key ตาม username): ล็อกอินผิดได้ 5 ครั้งใน 15 นาที เกินแล้ว block พร้อมข้อความบอกเวลาที่
+  ต้องรอ, ล็อกอินสำเร็จล้างประวัติ failure ทันที — มาจาก finding ของ security review (username
+  enumeration + ไม่มี brute-force protection, CWE-307) เลือก in-memory เพราะแอปรันเป็น single process
+  local-only ตามนโยบาย (state หายเมื่อ restart ซึ่งยอมรับได้สำหรับชะลอ brute-force)
+  - แยก logic เป็น pure factory (`createLoginRateLimiter`, inject clock ได้) ตาม pattern เดียวกับ
+    `decideRedirect` + เก็บ instance บน `globalThis` กัน hot-reload รีเซ็ต (trick เดียวกับ `src/lib/prisma.ts`)
+  - จุดสำคัญใน `loginAction` (`src/app/login/actions.ts`): เมื่อ signIn สำเร็จ NextAuth จะ **throw
+    NEXT_REDIRECT** ไม่ return ปกติ — ต้องเช็ค digest `NEXT_REDIRECT` ใน catch แล้ว `recordSuccess`
+    ก่อน rethrow ไม่งั้นล็อกอินสำเร็จจะไม่ล้าง failure history
+  - Unit test 8 เคสใน `src/lib/loginRateLimit.test.ts` (threshold, retry-after, sliding window,
+    ล้างเมื่อสำเร็จ, แยก key ต่อ username, custom options) — `npm run test` ผ่านทั้ง 49 เคส
+  - ทดสอบจริงในเบราว์เซอร์: ล็อกอินผิด 5 ครั้ง (username ปลอม) → ครั้งที่ 6 เห็นข้อความ
+    "พยายามเข้าสู่ระบบมากเกินไป กรุณาลองใหม่ในอีก 10 นาที" จริง และรัน `npm run test:e2e` (3 เคส) ผ่าน
+    ยืนยันว่า login สำเร็จ/ผิดพลาด/ออกจากระบบยังทำงานเหมือนเดิม (ต้อง stop dev server ของ preview ก่อน
+    เพราะ Next 16 ไม่ยอมให้รัน dev server สองตัวในโปรเจกต์เดียวกัน)
+  - **หมายเหตุตอน dev/demo**: ถ้า block ตัวเองระหว่างซ้อม demo ให้ restart dev server (state อยู่ใน
+    memory) หรือรอให้ครบ window
+  - **ยังไม่ได้แก้** timing side-channel (username enumeration ผ่านเวลา response) จาก finding เดียวกัน
+    — rate limiter ช่วยลดผลกระทบแล้วแต่ยังไม่ได้ทำ dummy bcrypt compare สำหรับ user ที่ไม่มีอยู่
+
 ## ช่องโหว่ / สิ่งที่ยังไม่สมบูรณ์ (Known gaps)
 
 - ไม่มีระบบ self-service reset password — ต้องให้ Admin จัดการผ่านหน้า `/admin` เท่านั้น
