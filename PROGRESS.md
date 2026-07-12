@@ -75,7 +75,7 @@ _อัปเดตล่าสุด: 2026-07-12_
   - เพิ่ม `exclude: ["**/e2e/**"]` ใน `vitest.config.ts` เพราะ pattern default ของ Vitest จะไป match
     ไฟล์ `e2e/login.spec.ts` ด้วย (ชื่อ `*.spec.ts`) แล้วพังเพราะเป็นไฟล์ของ Playwright ไม่ใช่ Vitest
 - **CI (GitHub Actions)**: เพิ่ม `.github/workflows/ci.yml` รันทุก push และทุก pull request บน
-  `ubuntu-latest`, Node 20, 2 job แยกกันรันขนาน:
+  `ubuntu-latest`, Node 22, 2 job แยกกันรันขนาน:
   - `test` — `npm ci` → `npx prisma generate` → `npm run test` (unit + integration ทั้ง 41 เคส)
   - `e2e` — `npm ci` → `npx prisma generate` → `npx playwright install --with-deps chromium` →
     `npm run test:e2e` (3 เคส login) พร้อม upload `test-results/` (Playwright trace) เป็น artifact
@@ -84,6 +84,10 @@ _อัปเดตล่าสุด: 2026-07-12_
     ตามที่ออกแบบไว้ใน `src/test/setupEnv.ts` และ `e2e/testDb.ts` อยู่แล้ว (ไม่พึ่ง `.env` จริง)
   - ยังไม่ได้เพิ่ม `npm run lint`/`npm run build` เข้า CI — ขอบเขตตามที่ขอคือรันเทสที่มีอยู่เท่านั้น
     พิจารณาเพิ่มทีหลังถ้าต้องการเช็ค type/lint errors ใน CI ด้วย
+  - เดิม pin ไว้ที่ Node 20 แต่ GitHub Actions runner บังคับ force รันเป็น Node 24 อยู่ดีพร้อม deprecation
+    warning เลยปรับเป็น Node 22 (LTS ปัจจุบัน) แทนใน commit `0dabfbc` — ตรวจสอบใน Actions tab จริงแล้วว่า
+    ทั้ง 2 run (Node 20 เดิมที่ commit `5fbc8fe` และ Node 22 ที่ `0dabfbc`) ผ่านสำเร็จทั้งคู่ ("completed
+    successfully"), run หลัง Node 22 เร็วขึ้น (1m12s เทียบกับ 2m38s) เพราะไม่โดน force upgrade runtime กลางทาง
 
 ## ช่องโหว่ / สิ่งที่ยังไม่สมบูรณ์ (Known gaps)
 
