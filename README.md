@@ -2,6 +2,16 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Set up the local SQLite database (not checked into git):
+
+```bash
+npx prisma migrate deploy
+npm run db:seed
+```
+
+This creates `dev.db` and seeds an Admin user (`admin` / `ChangeMe123!` by default,
+see `.env` to override).
+
 First, run the development server:
 
 ```bash
