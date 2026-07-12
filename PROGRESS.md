@@ -18,6 +18,18 @@ _อัปเดตล่าสุด: 2026-07-12_
 - **Alert Banner**: แถบแจ้งเตือนแบบ global สรุปจำนวนเครื่องมือใกล้ครบกำหนด/หมดอายุ ขยาย/ปิดได้
 - **Admin user management**: เพิ่ม/แก้ไขสิทธิ์/ลบผู้ใช้ พร้อมกันไม่ให้ลบ/ถอดสิทธิ์ตัวเอง
 - **Landing page**: หน้าแรกที่ปรับตามสถานะล็อกอิน (ยังไม่ล็อกอิน → ปุ่มเข้าสู่ระบบ, ล็อกอินแล้ว → ปุ่มไปแดชบอร์ด)
+- **Landing page redesign (TKC Progress reference)**: ปรับ UI หน้าแรก (`src/app/page.tsx`) ตาม reference
+  design ที่ลูกค้าให้มา — top nav พื้นขาวมีเส้นขอบล่าง/shadow พร้อมลิงก์สไตล์บริษัท (Service, OEM Product,
+  About Us, Technology ▾, Contact Us สีกรมท่า `text-blue-950` ตัวหนา), section 3 คอลัมน์ฟีเจอร์
+  (ไอคอน outline + หัวข้อ + เส้นคั่นประ + คำอธิบาย, responsive `grid-cols-1 md:grid-cols-3`), และ banner
+  ท้ายหน้าเป็นภาพ skyline โรงงานที่วาดด้วย SVG inline (ไม่ใช้รูปจริง เพื่อไม่ต้อง fetch ไฟล์ภายนอก) ทับด้วย
+  `bg-blue-900/70` overlay ให้อ่านตัวอักษรขาวได้ชัด พร้อมปุ่ม "กลับขึ้นด้านบน" ทรงกลมมุมล่างขวา
+  (`src/components/BackToTopButton.tsx`, client component ใช้ `window.scrollTo`) — เก็บ CTA
+  เข้าสู่ระบบ/ไปแดชบอร์ดและ badge สถานะ 🟢🟡🔴 เดิมไว้ใน hero section ไม่ได้ตัดออก
+  ทดสอบจริงในเบราว์เซอร์ทั้ง mobile และ desktop (1280px) แล้วว่า layout/สี/ปุ่มกลับขึ้นบนทำงานถูกต้อง
+  ไม่มี console error และตรวจซ้ำว่าไม่กระทบหน้าอื่น (`/login`, `/dashboard`, `/tools/manage`, `/tools/[id]`,
+  `/admin`) — ทำงานผ่าน branch `feature/landing-page-redesign` → PR → merge เข้า `master`
+  (commit `b9bdba3`) แล้วลบ branch ทิ้งหลัง merge
 - **Branding**: โลโก้ TKC เป็น favicon และแสดงอยู่เหนือฟอร์ม login
 - **`.env.example`**: template สำหรับ env vars ที่จำเป็น (commit ได้ ต่างจาก `.env` จริงที่ถูก gitignore)
 - **Sample seed data**: `prisma/seed.ts` สร้างเครื่องมือตัวอย่าง 6 รายการ ครบทั้ง 3 สถานะ พร้อมประวัติ
@@ -101,6 +113,9 @@ _อัปเดตล่าสุด: 2026-07-12_
   จะไม่กลับมาอีกในแท็บนั้นจนกว่าจะข้ามวัน (ไม่ใช่บั๊ก แต่ต้องระวังตอน demo จริง)
 - ยังไม่มีแผน production database — SQLite เหมาะกับ local/demo แต่ต้องประเมินใหม่ก่อน go-live จริง
   ถ้ามีผู้ใช้พร้อมกันเยอะ
+- Nav links ใหม่บนหน้าแรก (Service, OEM Product, About Us, Technology, Contact Us) เป็น anchor (`#...`)
+  ที่ยังไม่มีเนื้อหาปลายทางจริง — ใส่ตามโครงสร้าง reference design ที่ลูกค้าให้มา ยังไม่ได้ถามลูกค้าว่า
+  ต้องการให้ลิงก์เหล่านี้ไปหน้า/section จริงหรือไม่
 
 ## แผนงานถัดไป (Next steps)
 
