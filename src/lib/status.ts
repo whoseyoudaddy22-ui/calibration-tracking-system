@@ -2,8 +2,12 @@ export type ToolStatus = "normal" | "warning" | "expired";
 
 const WARNING_THRESHOLD_DAYS = 30;
 
+export function getDaysRemaining(expiryDate: Date, now: Date = new Date()): number {
+  return Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 export function getToolStatus(expiryDate: Date, now: Date = new Date()): ToolStatus {
-  const diffDays = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const diffDays = getDaysRemaining(expiryDate, now);
   if (diffDays < 0) return "expired";
   if (diffDays <= WARNING_THRESHOLD_DAYS) return "warning";
   return "normal";

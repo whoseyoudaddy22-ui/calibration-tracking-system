@@ -4,9 +4,28 @@ import { prisma } from "@/lib/prisma";
 import { Nav } from "@/components/Nav";
 import { ToolSearchForm } from "@/components/ToolSearchForm";
 import { Pagination } from "@/components/Pagination";
-import { getToolStatus, STATUS_LABEL, STATUS_BADGE_CLASS } from "@/lib/status";
+import { StatusDonutChart } from "@/components/StatusDonutChart";
+import { StatCard } from "@/components/StatCard";
+import { DueSummaryList } from "@/components/DueSummaryList";
+import { MonthlyDueChart } from "@/components/MonthlyDueChart";
+import { ClipboardListIcon, CheckCircleIcon, ClockIcon, ExclamationTriangleIcon } from "@/components/icons";
+import { getToolStatus, getDaysRemaining, STATUS_LABEL, STATUS_BADGE_CLASS, type ToolStatus } from "@/lib/status";
 
 const PAGE_SIZE = 20;
+const MONTH_LABELS = [
+  "ม.ค.",
+  "ก.พ.",
+  "มี.ค.",
+  "เม.ย.",
+  "พ.ค.",
+  "มิ.ย.",
+  "ก.ค.",
+  "ส.ค.",
+  "ก.ย.",
+  "ต.ค.",
+  "พ.ย.",
+  "ธ.ค.",
+];
 
 export default async function DashboardPage({
   searchParams,
@@ -29,7 +48,9 @@ export default async function DashboardPage({
       }
     : undefined;
 
-  const [tools, total] = await Promise.all([
+  const now = new Date();
+
+  const [tools, total, allTools] = await Promise.all([
     prisma.tool.findMany({
       where,
       orderBy: { expiryDate: "asc" },
@@ -37,16 +58,111 @@ export default async function DashboardPage({
       take: PAGE_SIZE,
     }),
     prisma.tool.count({ where }),
+    prisma.tool.findMany({ select: { id: true, toolCode: true, name: true, expiryDate: true } }),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const withStatus = tools.map((tool) => ({ ...tool, status: getToolStatus(tool.expiryDate) }));
+  const withStatus = tools.map((tool) => ({ ...tool, status: getToolStatus(tool.expiryDate, now) }));
+
+  const overview = allTools.map((tool) => ({
+    ...tool,
+    status: getToolStatus(tool.expiryDate, now),
+    daysRemaining: getDaysRemaining(tool.expiryDate, now),
+  }));
+
+  const statusCounts = overview.reduce<Record<ToolStatus, number>>(
+    (acc, tool) => {
+      acc[tool.status] += 1;
+      return acc;
+    },
+    { normal: 0, warning: 0, expired: 0 },
+  );
+
+  const totalTools = overview.length;
+  const percentOf = (count: number) => (totalTools > 0 ? `${((count / totalTools) * 100).toFixed(1)}%` : undefined);
+
+  const nearDue = overview
+    .filter((tool) => tool.status === "warning")
+    .sort((a, b) => a.expiryDate.getTime() - b.expiryDate.getTime())
+    .slice(0, 5)
+    .map((tool) => ({
+      id: tool.id,
+      toolCode: tool.toolCode,
+      name: tool.name,
+      expiryDate: tool.expiryDate,
+      dayLabel: `เหลืออีก ${tool.daysRemaining} วัน`,
+    }));
+
+  const expiredList = overview
+    .filter((tool) => tool.status === "expired")
+    .sort((a, b) => a.expiryDate.getTime() - b.expiryDate.getTime())
+    .slice(0, 5)
+    .map((tool) => ({
+      id: tool.id,
+      toolCode: tool.toolCode,
+      name: tool.name,
+      expiryDate: tool.expiryDate,
+      dayLabel: `เกิน ${Math.abs(tool.daysRemaining)} วัน`,
+    }));
+
+  const currentYear = now.getFullYear();
+  const monthlyDue = MONTH_LABELS.map((label, monthIndex) => ({
+    label,
+    count: overview.filter(
+      (tool) => tool.expiryDate.getFullYear() === currentYear && tool.expiryDate.getMonth() === monthIndex,
+    ).length,
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="mx-auto max-w-6xl space-y-6">
         <Nav role={session?.user.role} />
         <h1 className="text-2xl font-semibold text-gray-900">แดชบอร์ดสถานะเครื่องมือ</h1>
+
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <StatCard icon={<ClipboardListIcon />} label="เครื่องมือทั้งหมด" value={totalTools} color="blue" />
+          <StatCard
+            icon={<CheckCircleIcon />}
+            label="ปกติ"
+            value={statusCounts.normal}
+            sublabel={percentOf(statusCounts.normal)}
+            color="green"
+          />
+          <StatCard
+            icon={<ClockIcon />}
+            label="ใกล้ครบกำหนด"
+            value={statusCounts.warning}
+            sublabel={percentOf(statusCounts.warning)}
+            color="yellow"
+          />
+          <StatCard
+            icon={<ExclamationTriangleIcon />}
+            label="หมดอายุ"
+            value={statusCounts.expired}
+            sublabel={percentOf(statusCounts.expired)}
+            color="red"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <StatusDonutChart counts={statusCounts} />
+          <DueSummaryList
+            title="เครื่องมือใกล้ครบกำหนด (ภายใน 30 วัน)"
+            emptyText="ไม่มีเครื่องมือที่ใกล้ครบกำหนด"
+            dayBadgeClass={STATUS_BADGE_CLASS.warning}
+            items={nearDue}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <DueSummaryList
+            title="เครื่องมือที่หมดอายุ"
+            emptyText="ไม่มีเครื่องมือที่หมดอายุ"
+            dayBadgeClass={STATUS_BADGE_CLASS.expired}
+            items={expiredList}
+          />
+          <MonthlyDueChart data={monthlyDue} />
+        </div>
 
         <ToolSearchForm basePath="/dashboard" query={q} />
 

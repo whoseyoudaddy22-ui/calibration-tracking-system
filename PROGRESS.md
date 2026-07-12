@@ -112,6 +112,41 @@ _อัปเดตล่าสุด: 2026-07-12_
     ทั้ง 2 run (Node 20 เดิมที่ commit `5fbc8fe` และ Node 22 ที่ `0dabfbc`) ผ่านสำเร็จทั้งคู่ ("completed
     successfully"), run หลัง Node 22 เร็วขึ้น (1m12s เทียบกับ 2m38s) เพราะไม่โดน force upgrade runtime กลางทาง
 
+- **Donut chart บน Dashboard**: เพิ่ม `src/components/StatusDonutChart.tsx` (server component, ไม่มี client
+  JS) แสดงสัดส่วนสถานะ 🟢/🟡/🔴 เป็นวงแหวน SVG (ใช้เทคนิค `stroke-dasharray`/`stroke-dashoffset` บน `<circle>`
+  หมุน -90° ให้เริ่มที่ 12 นาฬิกา) พร้อมตัวเลขรวมกลางวง และ legend (จุดสี + label จาก `STATUS_LABEL` + จำนวน
+  + เปอร์เซ็นต์) ตาม reference design ที่ลูกค้าให้มา — สีวงเป็น green-500/yellow-500/red-500 (`#22c55e`/
+  `#eab308`/`#ef4444`) ให้เข้มพอเห็นชัดบนพื้นขาว ต่างจาก badge สถานะที่ใช้ทวี light shade (`*-100`/`*-800`)
+  เพราะ badge อยู่บนพื้นขาวเป็นตัวหนังสือ ส่วนวงกลมต้องเป็นพื้นสีทึบ
+  ตัวเลขสัดส่วนคำนวณจาก **เครื่องมือทั้งหมดในระบบ** (query แยกต่างหากที่ไม่ผูกกับคำค้นหา/pagination ของตาราง
+  ด้านล่าง) เพื่อให้เป็นภาพรวมจริงเสมอ ไม่ใช่แค่หน้าที่กำลังดูอยู่ — ใช้ `getToolStatus()` ตัวเดิมคำนวณ
+  (ไม่ derive สถานะด้วย SQL date range แยกต่างหาก กัน logic เพี้ยนจากต้นทาง)
+  ทดสอบจริงในเบราว์เซอร์แล้วว่าวงแหวน/ตัวเลขกลาง/legend แสดงถูกต้องตามข้อมูลจริง ไม่มี console error
+- **Dashboard overview widgets เพิ่มเติม (ตาม reference mockup ลูกค้า)**: ขยายเฉพาะเนื้อหาในหน้า
+  `/dashboard` — **ไม่แตะโครงสร้าง nav ของทั้งระบบ** (ลูกค้าเลือกไม่ทำ sidebar เต็มรูปแบบ เพราะเมนูบางอย่างใน
+  mockup เช่น "รายงานและกราฟ", "นำเข้าข้อมูล Excel", "ตั้งค่า" ยังไม่มีหน้าจริงในระบบ — คงเมนูบนแบบเดิมไว้)
+  เพิ่ม:
+  - `src/components/StatCard.tsx` + `src/components/icons.tsx` (ไอคอน outline สไตล์เดียวกับหน้าแรก) — การ์ด
+    สรุปตัวเลข 4 ใบ (ทั้งหมด/ปกติ/ใกล้ครบกำหนด/หมดอายุ) พร้อมเปอร์เซ็นต์
+  - `src/components/DueSummaryList.tsx` — ตารางย่อย reuse ได้ทั้งสอง panel: "เครื่องมือใกล้ครบกำหนด (ภายใน 30
+    วัน)" (เรียงตามวันครบกำหนดใกล้สุดก่อน) และ "เครื่องมือที่หมดอายุ" (เรียงตามเกินกำหนดมากสุดก่อน) แสดงสูงสุด
+    5 รายการต่อ panel — ไม่ได้ใส่ลิงก์ "ดูทั้งหมด" แบบใน mockup เพราะยังไม่มีหน้ารายการที่กรองตามสถานะแยกจริง
+  - `src/components/MonthlyDueChart.tsx` — กราฟเส้น/พื้นที่ SVG (ไม่มี client JS เหมือนกัน) แสดงจำนวนเครื่องมือ
+    แยกตามเดือนที่ครบกำหนด **เฉพาะปีปัจจุบัน** (เทียบ `expiryDate.getFullYear()` กับปีปัจจุบัน) สีน้ำเงินเดียว
+    (`#3b82f6`) ตาม dataviz convention (sequential = hue เดียว)
+  - เพิ่ม `getDaysRemaining()` ใน `src/lib/status.ts` (แยกออกมาจาก `getToolStatus()` เดิมที่คำนวณ diffDays
+    inline) เพื่อไม่ให้ logic คำนวณ "เหลืออีก/เกินมาแล้วกี่วัน" ใน dashboard เพี้ยนไปจาก `getToolStatus()` —
+    รัน `npm run test -- src/lib/status.test.ts` แล้วผ่านทั้ง 6 เคสเดิม (behavior ไม่เปลี่ยน)
+  - ขยาย container ของหน้า dashboard จาก `max-w-5xl` เป็น `max-w-6xl` เพราะเนื้อหาแน่นขึ้นมาก (การ์ด 4 ใบ +
+    กราฟ 2 คอลัมน์)
+  - แก้ lint error `react-hooks/immutability` ใน `StatusDonutChart.tsx` (reassign ตัวแปร `cumulative` ระหว่าง
+    render ไม่ได้ตาม React Compiler rule) เปลี่ยนเป็นคำนวณ prefix sum แบบ pure แทน — `npm run lint` ผ่านสะอาด
+    สำหรับไฟล์ที่แก้ในงานนี้ (เจอ error เดิมที่ไม่เกี่ยวข้องใน `AlertBannerClient.tsx` — ไม่ได้แตะ เพราะนอก
+    ขอบเขต ส่งเป็น background task แยกให้แก้ทีหลัง)
+  - ทดสอบจริงในเบราว์เซอร์ (ผ่าน accessibility tree/`get_page_text`/console เพราะ screenshot tool ของ Browser
+    pane timeout ชั่วคราวรอบนี้ ปัญหาเดิมที่เคยเจอมาก่อน — ไม่กระทบตัวแอป) ยืนยันตัวเลขการ์ด/โดนัท/รายการใกล้
+    ครบกำหนด/รายการหมดอายุ/กราฟรายเดือนตรงกับข้อมูลจริงทั้งหมด ไม่มี console/server error
+
 ## ช่องโหว่ / สิ่งที่ยังไม่สมบูรณ์ (Known gaps)
 
 - ไม่มีระบบ self-service reset password — ต้องให้ Admin จัดการผ่านหน้า `/admin` เท่านั้น
