@@ -74,6 +74,16 @@ _อัปเดตล่าสุด: 2026-07-12_
     ทับได้เพราะ migrate/seed เป็น idempotent
   - เพิ่ม `exclude: ["**/e2e/**"]` ใน `vitest.config.ts` เพราะ pattern default ของ Vitest จะไป match
     ไฟล์ `e2e/login.spec.ts` ด้วย (ชื่อ `*.spec.ts`) แล้วพังเพราะเป็นไฟล์ของ Playwright ไม่ใช่ Vitest
+- **CI (GitHub Actions)**: เพิ่ม `.github/workflows/ci.yml` รันทุก push และทุก pull request บน
+  `ubuntu-latest`, Node 20, 2 job แยกกันรันขนาน:
+  - `test` — `npm ci` → `npx prisma generate` → `npm run test` (unit + integration ทั้ง 41 เคส)
+  - `e2e` — `npm ci` → `npx prisma generate` → `npx playwright install --with-deps chromium` →
+    `npm run test:e2e` (3 เคส login) พร้อม upload `test-results/` (Playwright trace) เป็น artifact
+    เมื่อ fail เพื่อ debug ย้อนหลังได้
+  - ไม่ต้องตั้ง repo secret ใดๆ — ทั้งสอง job สร้าง `DATABASE_URL`/`AUTH_SECRET` ของตัวเองแบบ self-contained
+    ตามที่ออกแบบไว้ใน `src/test/setupEnv.ts` และ `e2e/testDb.ts` อยู่แล้ว (ไม่พึ่ง `.env` จริง)
+  - ยังไม่ได้เพิ่ม `npm run lint`/`npm run build` เข้า CI — ขอบเขตตามที่ขอคือรันเทสที่มีอยู่เท่านั้น
+    พิจารณาเพิ่มทีหลังถ้าต้องการเช็ค type/lint errors ใน CI ด้วย
 
 ## ช่องโหว่ / สิ่งที่ยังไม่สมบูรณ์ (Known gaps)
 
