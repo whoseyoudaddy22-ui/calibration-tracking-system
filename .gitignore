@@ -54,3 +54,12 @@ next-env.d.ts
 /test-integration.db-journal
 /test-integration.db-wal
 /test-integration.db-shm
+
+# e2e test sqlite database + Playwright output (created/removed automatically by `npm run test:e2e`)
+/e2e-test.db
+/e2e-test.db-journal
+/e2e-test.db-wal
+/e2e-test.db-shm
+/test-results/
+/playwright-report/
+/playwright/.cache/

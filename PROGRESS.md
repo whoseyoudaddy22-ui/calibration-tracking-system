@@ -56,8 +56,24 @@ _อัปเดตล่าสุด: 2026-07-12_
     better-sqlite3 (synchronous, lock ได้ถ้ารันพร้อมกัน) — รันตามลำดับแทน เร็วพอสำหรับขนาดโปรเจกต์นี้
   - **ไม่ครอบคลุม** `loginAction` (`src/app/login/actions.ts`) — ตัวมันเองเรียก NextAuth `signIn`
     ซึ่งต้องใช้ cookies/request scope ของจริงที่ Next.js server เท่านั้น (ทดสอบใน Node ตรงๆ ไม่ได้อย่างมีความหมาย)
-    ตรรกะหลักที่แตะ DB จริง (`authorize` callback ใน `src/auth.ts`) ยังไม่มีเทสแยก — ถ้าต้องการความมั่นใจ
-    เพิ่มเติมสำหรับ login ควรทำ e2e/browser test แทน
+    ครอบคลุมด้วย e2e/browser test แทนแล้ว (ดูหัวข้อถัดไป)
+- **E2E test สำหรับ login (Playwright)**: เพิ่ม `@playwright/test` เป็น devDependency (ติดตั้ง Chromium
+  browser ด้วย `npx playwright install chromium`) — ผู้ใช้เลือกแนวทางนี้เองแทนการ verify มือครั้งเดียว
+  เพราะต้องการเทสอัตโนมัติที่รันซ้ำได้ในโค้ดเบส `npm run test:e2e` รัน 3 เคสใน
+  `e2e/login.spec.ts` ผ่านเบราว์เซอร์จริง (headless Chromium) กับ Next dev server จริงที่พอร์ต 3100:
+  - ล็อกอินด้วย credential ที่ถูกต้อง → redirect ไป `/`, เห็นชื่อผู้ใช้+role ใน `AuthStatus`, กดไปแดชบอร์ดได้
+  - ล็อกอินด้วยรหัสผ่านผิด → ค้างที่ `/login` พร้อมข้อความ "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"
+  - ออกจากระบบ → กลับไปเห็นปุ่ม "เข้าสู่ระบบ" (ยืนยันว่า signOut ทำงานจริง)
+  - Setup อยู่ที่ `e2e/` (`playwright.config.ts` ที่ root สั่ง webServer ให้รัน `next dev -p 3100` ด้วย
+    `DATABASE_URL`/`AUTH_SECRET` แยกจากของจริง, `global-setup.ts` รัน `prisma migrate deploy` +
+    `tsx e2e/seed.ts` สร้างผู้ใช้ทดสอบ (`upsert` กันชนกรณีไฟล์ db เก่าหลงเหลือ) ก่อนรัน,
+    `global-teardown.ts`/`removeDbFiles.ts` ลบไฟล์ `e2e-test.db` ทิ้งหลังจบแบบ retry+warn ไม่ throw)
+  - **หมายเหตุที่ต้องรู้**: บน Windows บางครั้ง Next dev server ที่เพิ่งถูก kill ยังไม่ปล่อย lock ไฟล์
+    sqlite ทันที ทำให้ teardown ลบไฟล์ไม่สำเร็จบางรอบ (EBUSY) — จึงออกแบบให้แค่ warn ไม่ทำให้ทั้ง run fail
+    (exit code ยังเป็น 0 ตราบใดที่เทสทั้งหมดผ่าน) ไฟล์ที่หลงเหลือถูก gitignore ไว้และรอบถัดไปจะลบเองหรือ
+    ทับได้เพราะ migrate/seed เป็น idempotent
+  - เพิ่ม `exclude: ["**/e2e/**"]` ใน `vitest.config.ts` เพราะ pattern default ของ Vitest จะไป match
+    ไฟล์ `e2e/login.spec.ts` ด้วย (ชื่อ `*.spec.ts`) แล้วพังเพราะเป็นไฟล์ของ Playwright ไม่ใช่ Vitest
 
 ## ช่องโหว่ / สิ่งที่ยังไม่สมบูรณ์ (Known gaps)
 
@@ -70,8 +86,6 @@ _อัปเดตล่าสุด: 2026-07-12_
 ## แผนงานถัดไป (Next steps)
 
 - คุยกับลูกค้าเรื่องแผน hosting/deploy ก่อน go-live (ตอนนี้ยัง local-only ตามนโยบายโปรเจกต์)
-- พิจารณาเพิ่ม e2e/browser test สำหรับ `loginAction` ถ้าต้องการความมั่นใจสูงขึ้นกว่าปัจจุบัน (ดูหมายเหตุ
-  ในหัวข้อ Integration tests ด้านบน)
 
 ## บันทึกการตัดสินใจสำคัญ (Decision log)
 
