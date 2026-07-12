@@ -158,6 +158,20 @@ _อัปเดตล่าสุด: 2026-07-12_
   `npm run lint`/`npx tsc --noEmit`/`npm run test` (41 เคส) ผ่านหมด และทดสอบจริงในเบราว์เซอร์แล้วว่ากดปิดได้
   ทันที, reload หน้าแล้วยังจำสถานะปิดไว้ (ไม่มี hydration warning ใน console)
 
+- **Confirmation popup ก่อนเพิ่ม/แก้ไข/ลบเครื่องมือ**: เพิ่ม `src/components/ConfirmSubmitButton.tsx`
+  (client component ใช้ `<dialog>` element มาตรฐาน HTML ไม่พึ่ง library ภายนอก) ครอบปุ่ม "เพิ่มเครื่องมือ",
+  "บันทึก", "ลบ" ในหน้า `/tools/manage` (`src/app/tools/manage/page.tsx`) — กดปุ่มแล้วเช็ค
+  `form.reportValidity()` ก่อน (รักษาพฤติกรรม required field เดิม) ถ้าผ่านค่อยเปิด dialog ยืนยัน
+  ข้อความเฉพาะ action (ข้อความลบระบุด้วยว่าจะลบประวัติการสอบเทียบทั้งหมดด้วยและกู้คืนไม่ได้) กด "ยืนยัน"
+  ถึงจะ submit ฟอร์มจริงผ่านปุ่ม `type="submit" formAction={...}` ข้างในตัว dialog เอง (ใช้ DOM nesting
+  ปกติ ไม่ต้อง JS เชื่อม form) — ไม่แตะ logic ของ server action (`createTool`/`updateTool`/`deleteTool`)
+  เลย เป็นแค่ชั้น UI ก่อนหน้า, ไม่เปลี่ยน RBAC (Editor ยังเพิ่ม/แก้ไข/ลบเครื่องมือได้เหมือนเดิมตามที่ลูกค้า
+  ยืนยัน — "admin" ที่พูดถึงคือสิทธิ์ user management ใน `/admin` ซึ่งมีอยู่แล้ว ไม่ใช่ RBAC ของ tools)
+  ขอบเขตเฉพาะหน้า `/tools/manage` เท่านั้น (ยังไม่ทำที่ `/admin` user management ตามที่ลูกค้าเลือก)
+  ทดสอบจริงในเบราว์เซอร์แล้วว่า: กด "ลบ" เด้ง dialog ข้อความถูกต้องระบุ toolCode, กด "ยกเลิก" ปิด dialog
+  โดยไม่ลบข้อมูลจริง (ยืนยันด้วย DOM query), กด "บันทึก" เด้ง dialog แล้วกด "ยืนยัน" submit ฟอร์มจริง
+  สำเร็จไม่มี error — `npx tsc --noEmit`, `npx eslint`, `npm run test` (21 เคส unit tests) ผ่านหมด
+
 ## ช่องโหว่ / สิ่งที่ยังไม่สมบูรณ์ (Known gaps)
 
 - ไม่มีระบบ self-service reset password — ต้องให้ Admin จัดการผ่านหน้า `/admin` เท่านั้น

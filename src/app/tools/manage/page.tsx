@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Nav } from "@/components/Nav";
 import { ToolSearchForm } from "@/components/ToolSearchForm";
 import { Pagination } from "@/components/Pagination";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { createTool, updateTool, deleteTool } from "./actions";
 
 const PAGE_SIZE = 20;
@@ -61,12 +62,12 @@ export default async function ManageToolsPage({
           <ResultField />
           <NotesField />
           <div className="sm:col-span-2">
-            <button
-              type="submit"
+            <ConfirmSubmitButton
+              message="ยืนยันเพิ่มเครื่องมือใหม่เข้าสู่ระบบ?"
               className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white"
             >
               เพิ่มเครื่องมือ
-            </button>
+            </ConfirmSubmitButton>
           </div>
         </form>
       </section>
@@ -101,19 +102,19 @@ export default async function ManageToolsPage({
             <ResultField />
             <NotesField />
             <div className="flex items-end gap-2 sm:col-span-2">
-              <button
-                type="submit"
+              <ConfirmSubmitButton
+                message={`ยืนยันบันทึกการแก้ไขข้อมูลเครื่องมือ ${tool.toolCode}?`}
                 className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white"
               >
                 บันทึก
-              </button>
-              <button
-                type="submit"
+              </ConfirmSubmitButton>
+              <ConfirmSubmitButton
+                message={`ยืนยันลบเครื่องมือ ${tool.toolCode}? การลบจะลบประวัติการสอบเทียบทั้งหมดของเครื่องมือนี้ด้วย และไม่สามารถกู้คืนได้`}
                 formAction={deleteTool}
                 className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
               >
                 ลบ
-              </button>
+              </ConfirmSubmitButton>
               <Link
                 href={`/tools/${tool.id}`}
                 className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
