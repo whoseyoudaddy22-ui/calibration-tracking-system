@@ -24,12 +24,14 @@ _อัปเดตล่าสุด: 2026-07-12_
   การสอบเทียบ 2 รอบต่อชิ้น, seed แบบ idempotent (รันซ้ำได้ไม่ซ้ำข้อมูล)
 - **Project tooling**: `.claude/skills/` (ui-design-system, review-code, environment-setup) และ
   `/demo-start` command สำหรับเตรียมเครื่อง demo ให้ลูกค้าดูแบบ local-only
+- **RBAC end-to-end verification**: ทดสอบจริงในเบราว์เซอร์ทั้ง 3 สิทธิ์แล้ว — Editor เห็นเมนู
+  "จัดการเครื่องมือ" แต่ไม่เห็น/เข้า `/admin` ไม่ได้ (redirect), สร้าง/แก้ไข/ลบเครื่องมือได้จริง;
+  Visitor เห็นแค่แดชบอร์ด เข้า `/tools/manage` และ `/admin` ไม่ได้ (redirect ทั้งคู่) แต่ดูหน้าประวัติ
+  เครื่องมือ (read-only) ได้ปกติ — middleware และ server action บังคับสิทธิ์ตรงกันทุกกรณี ไม่พบบั๊ก
 
 ## ช่องโหว่ / สิ่งที่ยังไม่สมบูรณ์ (Known gaps)
 
 - ยังไม่มี automated tests (unit/integration/e2e) เลย
-- สิทธิ์ Editor และ Visitor ตรวจสอบผ่านการอ่านโค้ดเท่านั้น (middleware + `requireRole`) ยังไม่ได้
-  คลิกทดสอบจริงในเบราว์เซอร์แบบ end-to-end — มีแค่ฝั่ง Admin ที่ทดสอบจริงแล้ว
 - ไม่มี pagination/ค้นหาในหน้ารายการเครื่องมือ — ยังไม่กระทบเพราะข้อมูลน้อย แต่ต้องเพิ่มถ้าข้อมูลเยอะขึ้น
 - ไม่มีระบบ self-service reset password — ต้องให้ Admin จัดการผ่านหน้า `/admin` เท่านั้น
 - Alert Banner dismiss ใช้ `sessionStorage` แยกตามวันต่อแท็บเบราว์เซอร์ — ถ้ากดปิดระหว่างซ้อม demo
@@ -39,7 +41,6 @@ _อัปเดตล่าสุด: 2026-07-12_
 
 ## แผนงานถัดไป (Next steps)
 
-- ทดสอบ flow ของ Editor และ Visitor แบบ end-to-end ในเบราว์เซอร์
 - คุยกับลูกค้าเรื่องแผน hosting/deploy ก่อน go-live (ตอนนี้ยัง local-only ตามนโยบายโปรเจกต์)
 - พิจารณาเพิ่ม automated tests อย่างน้อยสำหรับ RBAC และ status logic
 - เพิ่ม pagination/ค้นหาในหน้าเครื่องมือเมื่อข้อมูลเริ่มเยอะ
