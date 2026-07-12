@@ -146,6 +146,17 @@ _อัปเดตล่าสุด: 2026-07-12_
   - ทดสอบจริงในเบราว์เซอร์ (ผ่าน accessibility tree/`get_page_text`/console เพราะ screenshot tool ของ Browser
     pane timeout ชั่วคราวรอบนี้ ปัญหาเดิมที่เคยเจอมาก่อน — ไม่กระทบตัวแอป) ยืนยันตัวเลขการ์ด/โดนัท/รายการใกล้
     ครบกำหนด/รายการหมดอายุ/กราฟรายเดือนตรงกับข้อมูลจริงทั้งหมด ไม่มี console/server error
+- **แก้ lint error `react-hooks/set-state-in-effect` ใน `AlertBannerClient.tsx`**: ของเดิมอ่าน
+  `sessionStorage` แล้ว `setDismissed(...)` ใน `useEffect` (เพื่อให้ initial render บน client ตรงกับ server
+  ก่อน — คือ `dismissed=false` เสมอตอน render แรก — ป้องกัน hydration mismatch เพราะ banner ทั้งก้อนจะ
+  หาย/ปรากฏถ้าค่าตอน SSR กับ client ไม่ตรงกัน) แต่วิธีนี้โดน eslint rule ใหม่ (`react-hooks/set-state-in-effect`)
+  ตีเพราะเป็นการ sync กับ external system (`sessionStorage`) — เปลี่ยนไปใช้ `useSyncExternalStore` แทน
+  (เป็น API ที่ React ออกแบบมาสำหรับ subscribe external store ตรงๆ พร้อม `getServerSnapshot` เพื่อจัดการ
+  SSR/hydration ให้ถูกต้องโดยไม่ต้อง setState ใน effect เอง) — ปุ่ม "ปิดการแจ้งเตือน" เปลี่ยนจาก
+  `sessionStorage.setItem` + `setDismissed(true)` เป็นเรียก `dismissForToday()` ที่เขียน sessionStorage แล้ว
+  notify listener ของ store เอง พฤติกรรมเดิมไม่เปลี่ยน (ปิดแล้วจำจนกว่าจะข้ามวัน ผ่าน `sessionStorage`) —
+  `npm run lint`/`npx tsc --noEmit`/`npm run test` (41 เคส) ผ่านหมด และทดสอบจริงในเบราว์เซอร์แล้วว่ากดปิดได้
+  ทันที, reload หน้าแล้วยังจำสถานะปิดไว้ (ไม่มี hydration warning ใน console)
 
 ## ช่องโหว่ / สิ่งที่ยังไม่สมบูรณ์ (Known gaps)
 

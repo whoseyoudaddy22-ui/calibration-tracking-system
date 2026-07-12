@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 
 type AlertItem = {
@@ -16,13 +16,29 @@ function dismissalKey() {
   return `calibration-alert-dismissed-${today}`;
 }
 
-export function AlertBannerClient({ items }: { items: AlertItem[] }) {
-  const [dismissed, setDismissed] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+const dismissalListeners = new Set<() => void>();
 
-  useEffect(() => {
-    setDismissed(sessionStorage.getItem(dismissalKey()) === "1");
-  }, []);
+function subscribeToDismissal(listener: () => void) {
+  dismissalListeners.add(listener);
+  return () => dismissalListeners.delete(listener);
+}
+
+function getDismissalSnapshot() {
+  return sessionStorage.getItem(dismissalKey()) === "1";
+}
+
+function getServerDismissalSnapshot() {
+  return false;
+}
+
+function dismissForToday() {
+  sessionStorage.setItem(dismissalKey(), "1");
+  dismissalListeners.forEach((listener) => listener());
+}
+
+export function AlertBannerClient({ items }: { items: AlertItem[] }) {
+  const dismissed = useSyncExternalStore(subscribeToDismissal, getDismissalSnapshot, getServerDismissalSnapshot);
+  const [expanded, setExpanded] = useState(false);
 
   if (dismissed) return null;
 
@@ -45,10 +61,7 @@ export function AlertBannerClient({ items }: { items: AlertItem[] }) {
         </button>
         <button
           type="button"
-          onClick={() => {
-            sessionStorage.setItem(dismissalKey(), "1");
-            setDismissed(true);
-          }}
+          onClick={dismissForToday}
           aria-label="ปิดการแจ้งเตือน"
           className="rounded-full px-2 py-1 leading-none text-amber-700 hover:bg-amber-100"
         >
