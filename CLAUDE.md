@@ -48,3 +48,15 @@
 npx create-next-app@latest calibration-tracking-system \
   --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
 cd calibration-tracking-system
+```
+
+โปรเจกต์นี้ถูกสร้างและตั้งค่าไว้แล้ว ดูขั้นตอน setup ปัจจุบันได้ที่ [README.md](./README.md)
+ไม่ต้องรันคำสั่งข้างต้นซ้ำ
+
+## สถานะการพัฒนาโปรเจกต์
+
+**อ่าน [PROGRESS.md](./PROGRESS.md) ก่อนเริ่มงานทุกครั้ง** เพื่อดูว่าฟีเจอร์ไหนเสร็จแล้ว
+มีช่องโหว่/งานค้างอะไรที่รู้อยู่ และมีการตัดสินใจสำคัญอะไรมาก่อนบ้าง
+
+เมื่อทำงานสำคัญเสร็จ (ฟีเจอร์ใหม่, แก้บั๊ก, การตัดสินใจที่มีผลต่องานถัดไป) ให้อัปเดต
+[PROGRESS.md](./PROGRESS.md) ก่อน commit เสมอ
