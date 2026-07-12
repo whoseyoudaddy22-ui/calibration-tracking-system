@@ -9,21 +9,12 @@ export default async function DashboardPage() {
   const tools = await prisma.tool.findMany({ orderBy: { expiryDate: "asc" } });
 
   const withStatus = tools.map((tool) => ({ ...tool, status: getToolStatus(tool.expiryDate) }));
-  const warningCount = withStatus.filter((t) => t.status === "warning").length;
-  const expiredCount = withStatus.filter((t) => t.status === "expired").length;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="mx-auto max-w-5xl space-y-6">
         <Nav role={session?.user.role} />
         <h1 className="text-2xl font-semibold text-gray-900">แดชบอร์ดสถานะเครื่องมือ</h1>
-
-        {(warningCount > 0 || expiredCount > 0) && (
-          <div className="space-y-1 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-            {expiredCount > 0 && <p>🔴 มีเครื่องมือหมดอายุ {expiredCount} รายการ</p>}
-            {warningCount > 0 && <p>🟡 มีเครื่องมือใกล้ครบกำหนด {warningCount} รายการ</p>}
-          </div>
-        )}
 
         <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
