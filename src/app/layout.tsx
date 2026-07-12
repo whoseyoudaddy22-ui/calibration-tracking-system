@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ระบบติดตามสถานะการสอบเทียบเครื่องมือ",
   description: "จัดเก็บ ตรวจสอบ และติดตามสถานะการสอบเทียบเครื่องมือวัด พร้อมแจ้งเตือนล่วงหน้าก่อนครบกำหนด",
+  icons: {
+    icon: "/logo.webp",
+  },
 };
 
 export default function RootLayout({

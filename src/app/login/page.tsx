@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useActionState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { loginAction } from "./actions";
 
@@ -18,7 +19,9 @@ function LoginForm() {
   const [state, formAction, pending] = useActionState(loginAction, { error: null });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-gray-50">
+      <Image src="/logo.webp" alt="TKC Progress" width={200} height={88} className="h-14 w-auto" priority />
+
       <form
         action={formAction}
         className="w-full max-w-sm space-y-4 rounded-lg border border-gray-200 bg-white p-8 shadow-sm"
