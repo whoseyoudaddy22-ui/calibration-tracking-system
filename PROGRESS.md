@@ -119,9 +119,8 @@ _อัปเดตล่าสุด: 2026-07-12_
   จะไม่กลับมาอีกในแท็บนั้นจนกว่าจะข้ามวัน (ไม่ใช่บั๊ก แต่ต้องระวังตอน demo จริง)
 - ยังไม่มีแผน production database — SQLite เหมาะกับ local/demo แต่ต้องประเมินใหม่ก่อน go-live จริง
   ถ้ามีผู้ใช้พร้อมกันเยอะ
-- Nav links ใหม่บนหน้าแรก (Service, OEM Product, About Us, Technology, Contact Us) เป็น anchor (`#...`)
-  ที่ยังไม่มีเนื้อหาปลายทางจริง — ใส่ตามโครงสร้าง reference design ที่ลูกค้าให้มา ยังไม่ได้ถามลูกค้าว่า
-  ต้องการให้ลิงก์เหล่านี้ไปหน้า/section จริงหรือไม่
+- Nav links บนหน้าแรกเหลือ Service กับ Contact Us เป็น anchor (`#...`) ที่ยังไม่มีเนื้อหาปลายทางจริง
+  (OEM Product, Technology, About Us ถูกตัดออกแล้ว — ดู decision log ด้านล่าง)
 
 ## แผนงานถัดไป (Next steps)
 
@@ -129,6 +128,10 @@ _อัปเดตล่าสุด: 2026-07-12_
 
 ## บันทึกการตัดสินใจสำคัญ (Decision log)
 
+- **2026-07-12** — ตัด nav links "OEM Product", "Technology", "About Us" ออกจากหน้าแรก (`src/app/page.tsx`)
+  เหลือแค่ "Service" กับ "Contact Us" — ลูกค้าระบุว่าระบบนี้ใช้ภายในองค์กร ไม่ใช่ business/marketing
+  website จึงไม่จำเป็นต้องมีเมนูสไตล์บริษัทครบชุดตาม reference design เดิม การ์ดฟีเจอร์หัวข้อ
+  "Technology" (ใน section 3 คอลัมน์) ยังคงไว้เหมือนเดิมเพราะเป็นคนละส่วนกับ nav
 - **2026-07-12** — คำสั่งติดตั้ง Node.js ใน `/demo-start` ใช้ `winget install OpenJS.NodeJS.LTS`
   แทนการดาวน์โหลด installer เองจากเว็บ เพราะ winget เป็นแหล่งที่เชื่อถือได้และเครื่องลูกค้าอาจมี
   นโยบายความปลอดภัยสูง ต้องขอยืนยันจากผู้ใช้ก่อนติดตั้งทุกครั้ง (ไม่ auto-install)

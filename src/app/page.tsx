@@ -3,11 +3,7 @@ import { auth } from "@/auth";
 import { AuthStatus } from "@/components/AuthStatus";
 import { BackToTopButton } from "@/components/BackToTopButton";
 
-const NAV_LINKS = [
-  { label: "Service", href: "#service" },
-  { label: "OEM Product", href: "#oem-product" },
-  { label: "About Us", href: "#about" },
-];
+const NAV_LINKS = [{ label: "Service", href: "#service" }];
 
 const FEATURES = [
   {
@@ -65,21 +61,6 @@ export default async function Home() {
                 {link.label}
               </a>
             ))}
-            <a href="#technology" className="flex items-center gap-1 hover:text-blue-800">
-              Technology
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </a>
             <a href="#contact" className="hover:text-blue-800">
               Contact Us
             </a>
